@@ -13,7 +13,6 @@ export default defineConfig({
 	],
 	resolve: {
 		alias: {
-			//这是一个对象吧！它得有键跟键名吧！
 			"@": resolve(__dirname, "src"),
 		},
 	},

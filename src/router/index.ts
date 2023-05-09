@@ -7,11 +7,11 @@ const routes: Array<RouteRecordRaw> = [
 		component: () => import("@/views/ThreeDemo/ThreeDemo.vue"),
 	},
 	{
-		path: "/home",
-		name: "Home",
-		component: () => import("@/views/Home.vue"),
+		path: "/cube",
+		name: "Cube",
+		component: () => import("@/views/GeometryCube/GeometryCube.vue"),
 	},
-	{ path: "/", redirect: { name: "Demo" } },
+	{ path: "/", redirect: { name: "Cube" } },
 ]
 const router = createRouter({
 	history: createWebHashHistory(),
