@@ -1,10 +1,10 @@
 import * as THREE from "three"
 // 引入性能监视器，之前也没用过
-import Stats from "@/libs/jsm/libs/stats.module"
-import { OrbitControls } from "@/libs/jsm/controls/OrbitControls"
-import { GLTFLoader } from "@/libs/jsm/loaders/GLTFLoader"
-import { DRACOLoader } from "@/libs/jsm/loaders/DRACOLoader"
-import { RoomEnvironment } from "@/libs/jsm/environments/RoomEnvironment.js"
+import Stats from "three/examples/jsm/libs/stats.module"
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader"
+import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader"
+import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js"
 
 export default class ThreeJs {
 	scene: THREE.Scene | null = null

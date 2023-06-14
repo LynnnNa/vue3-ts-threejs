@@ -11,7 +11,12 @@ const routes: Array<RouteRecordRaw> = [
 		name: "Cube",
 		component: () => import("@/views/GeometryCube/GeometryCube.vue"),
 	},
-	{ path: "/", redirect: { name: "Cube" } },
+	{
+		path: "/zhsq",
+		name: "Zhsq",
+		component: () => import("@/views/ZHSQ/ZHSQ.vue"),
+	},
+	{ path: "/", redirect: { name: "Zhsq" } },
 ]
 const router = createRouter({
 	history: createWebHashHistory(),

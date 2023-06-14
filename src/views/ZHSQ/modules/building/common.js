@@ -1,0 +1,71 @@
+import * as THREE from 'three'
+export function setPotion(c, Mesh, x, y, z) {
+	Mesh.position.set(c.x + x, c.y + y, c.z + z)
+}
+export const UVGenerator = {
+	generateTopUV: function (geometry, vertices, indexA, indexB, indexC, lidType, faceIndex) {
+		// 底面/顶面 的 shapeBox，用于计算每个截面的 v 值
+		const { lidBox } = geometry
+		const size = new THREE.Vector2()
+		// 获取盖面的包围盒大小，进行比较
+		lidBox.getSize(size)
+		const face = geometry.shapeFaces[faceIndex]
+		let p_a, p_b, p_c
+		if (lidType === 'top') {
+			// 顶盖面
+			// 原始face顶点顺序为 0-1-2
+			p_a = geometry.shapeVertices[face[0]]
+			p_b = geometry.shapeVertices[face[1]]
+			p_c = geometry.shapeVertices[face[2]]
+		}
+		if (lidType === 'bottom') {
+			// 底盖面
+			// 原始face顶点顺序为 2-1-0
+			p_a = geometry.shapeVertices[face[2]]
+			p_b = geometry.shapeVertices[face[1]]
+			p_c = geometry.shapeVertices[face[0]]
+		}
+		const uv_a = new THREE.Vector2((p_a.x - lidBox.min.x) / size.x, (p_a.y - lidBox.min.y) / size.y)
+		const uv_b = new THREE.Vector2((p_b.x - lidBox.min.x) / size.x, (p_b.y - lidBox.min.y) / size.y)
+		const uv_c = new THREE.Vector2((p_c.x - lidBox.min.x) / size.x, (p_c.y - lidBox.min.y) / size.y)
+		return [uv_a, uv_b, uv_c]
+	},
+	/**
+	 * 调用顺序为 某个面沿路径延申 -> 另一个面沿路径延申，faceIndex
+	 * 四个顶点中，abd 是第一个三角形，bcd 是第二个三角形
+	 * uStep 沿u方向的 第几段
+	 * faceIndex 那个截面
+	 */
+	generateSideWallUV: function (geometry, vertices, indexA, indexB, indexC, indexD, uStep, faceIndex) {
+		// u值分段
+		const totalStep = geometry.parameters.options.steps
+
+		// 四个点 确定一个断面，两个三角形 abd / bcd
+		const stepX = uStep / (totalStep + 1)
+		const u_min = stepX / totalStep
+		const u_max = u_min + 1 / totalStep
+
+		// abd三角形中，ab共享u: u_min，ad共享v: v_min
+		// bcd三角形中，cd共享u: u_max，bc共享v: v_max
+
+		// v值分段，使用原始的2dShape，与每个点占整个曲线的比例计算v值
+		const v_min = faceIndex / (totalStep + 1)
+		const v_max = v_min + 1 / (totalStep + 1)
+		const uvs = [
+			// 每个侧面独立u/v
+			// new THREE.Vector2( u_min, 0 ),
+			// new THREE.Vector2( u_min, 1 ),
+			// new THREE.Vector2( u_max, 1 ),
+			// new THREE.Vector2( u_max, 0 )
+
+			// 整个侧面完整uv
+			new THREE.Vector2(u_min, v_min),
+			new THREE.Vector2(u_min, v_max),
+			new THREE.Vector2(u_max, v_max),
+			new THREE.Vector2(u_max, v_min),
+		]
+		return uvs
+	},
+}
+
+export default {}

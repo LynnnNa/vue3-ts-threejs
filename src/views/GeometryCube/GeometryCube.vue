@@ -2,10 +2,10 @@
 	<div id="demo" class="demo"></div>
 </template>
 <script lang="ts">
-import ThreeJs from "@/views/GeometryCube/index"
-import { defineComponent, onMounted } from "vue"
+import ThreeJs from '@/views/GeometryCube/index'
+import { defineComponent, onMounted } from 'vue'
 export default defineComponent({
-	name: "GeometryCube",
+	name: 'GeometryCube',
 	props: {},
 	setup() {
 		onMounted(() => {

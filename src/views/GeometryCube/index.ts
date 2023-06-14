@@ -1,10 +1,10 @@
-import * as THREE from "three"
+import * as THREE from 'three'
 // 引入性能监视器，之前也没用过
-import Stats from "@/libs/jsm/libs/stats.module"
-import { OrbitControls } from "@/libs/jsm/controls/OrbitControls"
-import { GLTFLoader } from "@/libs/jsm/loaders/GLTFLoader"
-import { DRACOLoader } from "@/libs/jsm/loaders/DRACOLoader"
-import { RoomEnvironment } from "@/libs/jsm/environments/RoomEnvironment.js"
+import Stats from 'three/examples/jsm/libs/stats.module'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader'
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
 
 export default class ThreeJs {
 	scene: THREE.Scene = new THREE.Scene()
@@ -24,7 +24,7 @@ export default class ThreeJs {
 		this.initScene()
 		this.initRenderer()
 		// this.initStats()
-		const container = document.getElementById("demo")
+		const container = document.getElementById('demo')
 		container?.appendChild(this.renderer.domElement)
 		this.initCamera()
 		this.initControls()
@@ -34,20 +34,25 @@ export default class ThreeJs {
 	}
 	todo(): void {
 		const geometry = new THREE.BoxGeometry(1, 1, 1)
-		const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 })
+		// 贴图 纹理
+		const texture = new THREE.TextureLoader().load('/textures/crate.gif')
+		texture.colorSpace = THREE.SRGBColorSpace
+		// 上色 (跟贴图二选一)
+		// const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 })
+		const material = new THREE.MeshBasicMaterial({ map: texture })
 		const cube = new THREE.Mesh(geometry, material)
 		this.scene.add(cube)
 	}
 	initCamera(): void {
-		this.camera.position.set(5, 2, 2)
+		this.camera.position.set(1, 1, 3)
 		// this.camera.position.z =
 	}
 	initControls(): void {
 		this.controls = new OrbitControls(this.camera, this.renderer.domElement)
-		this.controls.target.set(0, 0.5, 0)
-		this.controls.update()
-		this.controls.enablePan = false
-		this.controls.enableDamping = true
+		// this.controls.target.set(0, 0.5, 0)
+		// this.controls.update()
+		// this.controls.enablePan = false
+		// this.controls.enableDamping = true
 	}
 	initScene(): void {
 		this.scene.background = new THREE.Color(0xbfe3dd)
@@ -61,9 +66,9 @@ export default class ThreeJs {
 	initStats(): void {
 		// 性能监听器
 		// 修改一下位置
-		this.stats.dom.style.position = "relative"
+		this.stats.dom.style.position = 'relative'
 		// 将性能监听器添加到容器中
-		const container = document.getElementById("demo")
+		const container = document.getElementById('demo')
 		container?.appendChild(this.stats.dom)
 	}
 	runAnimate(): void {

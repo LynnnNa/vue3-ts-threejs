@@ -7,13 +7,13 @@ module.exports = {
 	// 一行最多多少个字符
 	printWidth: 150,
 	// 指定每个缩进级别的空格数
-	tabWidth: 2,
+	tabWidth: 1,
 	// 使用制表符而不是空格缩进行
 	useTabs: true,
 	// 在语句末尾是否需要分号
 	semi: false,
 	// 是否使用单引号
-	singleQuote: false,
+	singleQuote: true,
 	// 更改引用对象属性的时间 可选值"<as-needed|consistent|preserve>"
 	quoteProps: 'as-needed',
 	// 在JSX中使用单引号而不是双引号
