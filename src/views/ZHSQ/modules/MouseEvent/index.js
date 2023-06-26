@@ -1,5 +1,4 @@
 import * as THREE from 'three'
-import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer'
 export default class MouseEvent {
 	constructor(_viewer, _callback, _type = 'click') {
 		this.viewer = _viewer
@@ -16,9 +15,9 @@ export default class MouseEvent {
 		pointer.y = -(e.offsetY / _this.viewer.renderer.domElement.clientHeight) * 2 + 1
 		raycaster.setFromCamera(pointer, _this.viewer.camera) // 通过摄像机和鼠标位置更新射线
 		const intersects = raycaster.intersectObject(_this.viewer.scene, true)
-		if (intersects.length > 0 && intersects[0]) {
-			intersects[0] && _this.callback(intersects[0].object, intersects[0].point)
-		}
+		// if (intersects.length > 0 && intersects[0]) {
+		_this.callback(intersects[0] && intersects[0].object, intersects[0] && intersects[0].point)
+		// }
 	}
 	startSelect(isSelect = true) {
 		// 开始绑定点击事件

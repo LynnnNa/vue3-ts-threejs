@@ -1,6 +1,7 @@
 import * as THREE from 'three'
-export function setPotion(c, Mesh, x, y, z) {
-	Mesh.position.set(c.x + x, c.y + y, c.z + z)
+import Unit from './unit'
+export function setPotion(c = new THREE.Vector3(), target, x = 0, y = 0, z = 0) {
+	target.position.set(c.x + x, c.y + y, c.z + z)
 }
 export const UVGenerator = {
 	generateTopUV: function (geometry, vertices, indexA, indexB, indexC, lidType, faceIndex) {
@@ -25,9 +26,18 @@ export const UVGenerator = {
 			p_b = geometry.shapeVertices[face[1]]
 			p_c = geometry.shapeVertices[face[0]]
 		}
-		const uv_a = new THREE.Vector2((p_a.x - lidBox.min.x) / size.x, (p_a.y - lidBox.min.y) / size.y)
-		const uv_b = new THREE.Vector2((p_b.x - lidBox.min.x) / size.x, (p_b.y - lidBox.min.y) / size.y)
-		const uv_c = new THREE.Vector2((p_c.x - lidBox.min.x) / size.x, (p_c.y - lidBox.min.y) / size.y)
+		let uv_a
+		let uv_b
+		let uv_c
+		try {
+			uv_a = new THREE.Vector2((p_a.x - lidBox.min.x) / size.x, (p_a.y - lidBox.min.y) / size.y)
+			uv_b = new THREE.Vector2((p_b.x - lidBox.min.x) / size.x, (p_b.y - lidBox.min.y) / size.y)
+			uv_c = new THREE.Vector2((p_c.x - lidBox.min.x) / size.x, (p_c.y - lidBox.min.y) / size.y)
+		} catch (e) {
+			uv_a = 0
+			uv_b = 1
+			uv_c = -1
+		}
 		return [uv_a, uv_b, uv_c]
 	},
 	/**
@@ -49,23 +59,67 @@ export const UVGenerator = {
 		// bcd三角形中，cd共享u: u_max，bc共享v: v_max
 
 		// v值分段，使用原始的2dShape，与每个点占整个曲线的比例计算v值
-		const v_min = faceIndex / (totalStep + 1)
-		const v_max = v_min + 1 / (totalStep + 1)
+
+		const v_min = faceIndex / (totalStep + 1) / 4 // totalStep + 1 一个面分成几个三角
+		const v_max = v_min + 1 / (totalStep + 1) / 4
 		const uvs = [
 			// 每个侧面独立u/v
-			// new THREE.Vector2( u_min, 0 ),
-			// new THREE.Vector2( u_min, 1 ),
-			// new THREE.Vector2( u_max, 1 ),
-			// new THREE.Vector2( u_max, 0 )
+			// new THREE.Vector2(u_min, 0),
+			// new THREE.Vector2(u_min, 1),
+			// new THREE.Vector2(u_max, 1),
+			// new THREE.Vector2(u_max, 0),
 
 			// 整个侧面完整uv
-			new THREE.Vector2(u_min, v_min),
-			new THREE.Vector2(u_min, v_max),
-			new THREE.Vector2(u_max, v_max),
-			new THREE.Vector2(u_max, v_min),
+			new THREE.Vector2(v_max, u_max), // 左下
+			new THREE.Vector2(v_min, u_max), // 右下
+			new THREE.Vector2(v_min, u_min), // 右上
+			new THREE.Vector2(v_max, u_min), // 左上
 		]
+		const vlen = vertices.length
+		let str = '' + vertices.length
+		/* for (let j = 18; j >= 1; j--) {
+			if (j % 3 === 0) str += '('
+			str += ' ' + vertices[vertices.length - j]
+			if (j % 3 === 1) str += ')'
+		} */
+		// console.log(faceIndex, ':', str)
+		// console.log(faceIndex, ':', vertices[vlen - 6], vertices[vlen - 5], vertices[vlen - 3], vertices[vlen - 2])
 		return uvs
 	},
 }
-
+export const createGroup = (layers) => {
+	const group = new THREE.Group()
+	layers.forEach((node) => {
+		group.add(node)
+	})
+	return group
+}
+export const clone = (t) => {
+	if (t.clone) return t.clone()
+	const _t = t.map((Mesh) => {
+		return Mesh.clone()
+	})
+	return _t
+}
+export const mirrorCoord = (c, direction = 'X') => {
+	const { x, y, z } = c
+	let res = c
+	if (direction === 'X') {
+		res = { x: -x, y, z }
+	}
+	return res
+}
+export const mirrorCoords = (Array, direction = 'X') => {
+	const res = Array.map((c) => {
+		return mirrorCoord(c, direction)
+	})
+	return res.reverse()
+}
+export const remove = (obj, scence) => {
+	if (!obj) return
+	if (!obj.isObject3D) return
+	// console.log('remove', obj)
+	scence.remove(obj)
+	obj.clear()
+}
 export default {}
