@@ -22,6 +22,7 @@ export default class Viewer {
 		this.outlinePass = undefined
 		this.animate
 		this.animateEventList = []
+		this.percentage = 0
 		this._initViewer()
 	}
 	distroy() {
@@ -48,7 +49,11 @@ export default class Viewer {
 	/* 状态检测 */
 	addStates() {
 		if (!this.statsControls) this.statsControls = new Stats()
-		this.statsControls.dom.position = 'absolute'
+		// this.statsControls.domElement.position = 'absolute'
+		this.statsControls.dom.style.left = 'auto'
+		this.statsControls.dom.style.right = '280px'
+		this.statsControls.dom.style.top = '60px'
+		// console.log(this.statsControls.dom)
 		this.viewerDom.appendChild(this.statsControls.dom)
 		this.statsUpdateObject = {
 			fun: this._statsUpdate,
@@ -141,6 +146,7 @@ export default class Viewer {
 
 		this.animate = () => {
 			requestAnimationFrame(this.animate)
+			// this.progress()
 			_this._undateDom()
 			_this._readerDom()
 			// 全局的公共动画函数，添加函数可同步执行

@@ -8,17 +8,19 @@ export default class Building {
 	c: THREE.Vector3
 	uNum = 1
 	fNum = 1
-	lastHoverMesh: THREE.Mesh
-	lastHoverMeshClone: THREE.Mesh
-	lastClickMesh: THREE.Mesh
-	lastClickMeshClone: THREE.Mesh
-	clickRoomTag: THREE.Sprite
-	nameTag: THREE.Sprite
-	roomTag: THREE.Sprite
+	lastHoverMesh: THREE.Mesh | undefined
+	lastHoverMeshClone: THREE.Mesh | undefined
+	lastClickMesh: THREE.Mesh | undefined
+	lastClickMeshClone: THREE.Mesh | undefined
+	clickRoomTag: THREE.Sprite | undefined
+	nameTag: THREE.Sprite | undefined
+	roomTag: THREE.Sprite | undefined
 	buildingGroup: THREE.Group
 	lineGroup: THREE.Group
+	iconTagsUUid: Set<string> = new Set()
+	iconTags: Array<THREE.Sprite> = new Array()
 	bData = { name: '测试大楼', fNum: 7, uNum: 4 }
-	tracker
+	tracker: typeof modules.Viewer.tracker
 	constructor(viewer: typeof modules.Viewer, bData = { name: '测试大楼', fNum: 7, uNum: 4 }, center = new THREE.Vector3(0, 0, 0)) {
 		this.viewer = viewer
 		this.bData = bData
@@ -30,10 +32,11 @@ export default class Building {
 	}
 	// 1: 一梯两户, 2: 一梯三户
 	createBuilding(unitType = 1, name = 'building') {
-		const building = []
+		const building: Array<THREE.Group> = []
 		for (let i = 0; i < this.fNum; i++) {
 			const y = uHeight * i
 			const cFloor = this.createFloor(unitType, i, !!(i === this.fNum - 1))
+			cFloor.name = 'ground floor'
 			const { x } = cFloor.position
 			setPotion(new THREE.Vector3(), cFloor, x, y, 0)
 			building.push(cFloor)
@@ -42,9 +45,11 @@ export default class Building {
 		this.buildingGroup.userData.name = name
 		this.buildingGroup.name = 'building'
 		setPotion(new THREE.Vector3(), this.buildingGroup, 0, (-uHeight * (this.fNum - 1)) / 2, 0)
-		this.tracker(this.createNameTag())
 		this.resetCamera()
-		return this.buildingGroup
+		return {
+			building: this.tracker(this.buildingGroup),
+			nameTag: this.tracker(this.createNameTag()),
+		}
 	}
 	createFloor(unitType = 1, currentFloor: number, isTop = false) {
 		let group: Array<THREE.Group> = []
@@ -89,12 +94,12 @@ export default class Building {
 		if (name === 'roomL') px = p.x - uWidth / 4
 		if (name === 'roomR') px = p.x + uWidth / 4
 		const { /* x, y, */ z } = point
-		this.roomTag.position.set(px, p.y + uHeight / 2, p.z)
-		this.roomTag.name = 'roomTag'
-		this.roomTag.userData.targetMeshUUid = mesh.uuid
-		this.roomTag.userData.positionOrigin = new THREE.Vector3(px, p.y + uHeight / 2, p.z)
-		this.viewer.scene.add(this.roomTag)
-		gsap.to(this.roomTag.position, {
+		this.roomTag!.position.set(px, p.y + uHeight / 2, p.z)
+		this.roomTag!.name = 'roomTag'
+		this.roomTag!.userData.targetMeshUUid = mesh.uuid
+		this.roomTag!.userData.positionOrigin = new THREE.Vector3(px, p.y + uHeight / 2, p.z)
+		this.viewer.scene.add(this.tracker(this.roomTag))
+		gsap.to(this.roomTag!.position, {
 			z,
 			duration: 0.7,
 		})
@@ -106,37 +111,37 @@ export default class Building {
 		// console.log(size)
 		const labels = new modules.Labels()
 		this.nameTag = labels.nameTag(this.bData.name)
-		this.nameTag.position.set(0, model.max.y + 30, 0)
-		this.nameTag.name = this.buildingGroup.userData.name
-		this.viewer.scene.add(this.tracker(this.nameTag))
+		this.nameTag!.position.set(0, model.max.y + 30, 0)
+		this.nameTag!.name = this.buildingGroup.userData.name
+		// this.viewer.scene.add(this.tracker(this.nameTag))
 		return this.nameTag
 	}
 	removehoverRoom() {
 		if (this.lastHoverMesh) {
-			if (!this.lastClickMesh || this.lastClickMesh.uuid !== this.lastHoverMesh.uuid) this.lastHoverMesh.material = this.lastHoverMeshClone.material
+			if (!this.lastClickMesh || this.lastClickMesh.uuid !== this.lastHoverMesh.uuid) this.lastHoverMesh.material = this.lastHoverMeshClone!.material
 		}
 		remove(this.roomTag, this.viewer.scene)
-		this.lastHoverMesh = null
-		this.lastHoverMeshClone = null
-		this.roomTag = null
+		this.lastHoverMesh = undefined
+		this.lastHoverMeshClone = undefined
+		this.roomTag = undefined
 	}
 	removeClickRoom() {
 		/* 还原上一个点击对象材质 */
 		if (this.lastClickMesh) {
-			this.lastClickMesh.material = this.lastClickMeshClone.material
+			this.lastClickMesh.material = this.lastClickMeshClone!.material
 		}
 		remove(this.lineGroup, this.viewer.scene)
 		remove(this.clickRoomTag, this.viewer.scene)
-		this.lastClickMesh = null
-		this.lastClickMeshClone = null
-		this.clickRoomTag = null
+		this.lastClickMesh = undefined
+		this.lastClickMeshClone = undefined
+		this.clickRoomTag = undefined
 	}
 	hoverRoom(mesh: THREE.Mesh, point: THREE.Vector3) {
 		if (this.lastHoverMesh && this.lastHoverMesh.uuid === mesh.uuid) return
 		if (this.lastClickMesh && this.lastClickMesh.uuid === mesh.uuid) return
 		this.addRoomTag(mesh, point)
 		if (this.lastHoverMesh) {
-			if (!this.lastClickMesh || this.lastClickMesh.uuid !== this.lastHoverMesh.uuid) this.lastHoverMesh.material = this.lastHoverMeshClone.material
+			if (!this.lastClickMesh || this.lastClickMesh.uuid !== this.lastHoverMesh.uuid) this.lastHoverMesh.material = this.lastHoverMeshClone!.material
 		}
 		this.lastHoverMesh = mesh
 		this.lastHoverMeshClone = mesh.clone()
@@ -154,7 +159,7 @@ export default class Building {
 		remove(this.lineGroup, this.viewer.scene)
 		/* 固定当前对象roomTag */
 		remove(this.clickRoomTag, this.viewer.scene)
-		this.clickRoomTag = this.roomTag.clone()
+		this.clickRoomTag = this.roomTag!.clone()
 		const { x, y, z } = this.clickRoomTag.userData.positionOrigin
 		// this.clickRoomTag.position.set(x, y, z)
 		gsap.to(this.clickRoomTag.position, {
@@ -165,11 +170,11 @@ export default class Building {
 		remove(this.roomTag, this.viewer.scene)
 		/* 还原上一个点击对象材质 */
 		if (this.lastClickMesh) {
-			this.lastClickMesh.material = this.lastClickMeshClone.material
+			this.lastClickMesh.material = this.lastClickMeshClone!.material
 		}
 		this.lastClickMesh = mesh
-		this.lastClickMeshClone = this.lastHoverMeshClone.clone()
-		this.createOutline(mesh/* , new THREE.Color('#ff00ff') */)
+		this.lastClickMeshClone = this.lastHoverMeshClone!.clone()
+		this.createOutline(mesh /* , new THREE.Color('#ff00ff') */)
 		mesh.material = new THREE.MeshBasicMaterial({
 			color: '#009EFF', // 颜色
 			transparent: true, // 是否开启使用透明度
@@ -179,7 +184,7 @@ export default class Building {
 		})
 		if (changeCamera) this.clickChangeCamera(x, y, z)
 	}
-	createOutline(mesh: THREE.Mesh/* , visibleColor: THREE.Color */) {
+	createOutline(mesh: THREE.Mesh /* , visibleColor: THREE.Color */) {
 		const position = mesh.getWorldPosition(new THREE.Vector3())
 		this.lineGroup = new THREE.Group()
 		const lineMEterial = new THREE.LineBasicMaterial({
@@ -202,31 +207,88 @@ export default class Building {
 	}
 	clickChangeCamera(x: number, y: number, z: number) {
 		gsap.to(this.viewer.camera.position, {
-			x: x > 0 ? x + 10 : x - 10,
-			y: y > 0 ? y - 40 : y + 40,
-			z: this.viewer.camera.position.z > 0 ? 600 : -600,
+			x: x > 0 ? x - 140 : x + 140,
+			y: y > 0 ? y + 140 : y + 140,
+			z: this.viewer.camera.position.z > 0 ? 800 : -800,
 			duration: 1,
 			ease: 'power1.inOut',
 			onComplete: () => {},
 		})
 		gsap.to(this.viewer.controls.target, {
-			x: x,
-			y: y,
+			x: x > 0 ? x - 40 : x + 40,
+			y: y > 0 ? y + 0 : y + 0,
 			z: z,
 			duration: 1,
 			ease: 'power1.inOut',
 			onComplete: () => {},
 		})
 	}
-	resetCamera(){
-		// gsap.to(this.viewer.camera.position, {
-		// 	x: 0,
-		// 	y: y > 0 ? y - 40 : y + 40,
-		// 	z: this.viewer.camera.position.z > 0 ? 600 : -600,
-		// 	duration: 1,
-		// 	ease: 'power1.inOut',
-		// 	onComplete: () => {},
+	clearIconTags() {
+		remove(this.iconTags, this.viewer.scene)
+	}
+	addIconTags(roomIds: Array<object>, iconName = '', html = '') {
+		// const ids = foomIds.map()
+		// roomIds.forEach(r=>{
+		// 	this.addIconTag(r.roomId)
 		// })
+		const a = ['roomL', 'roomR']
+		const allRooms: Array<THREE.Object3D> = []
+		function search(children: Array<THREE.Object3D>) {
+			children.forEach((item) => {
+				if (a.indexOf(item.name) > -1) {
+					const n = Math.floor(Math.random() * 6)
+					if (n === 1) allRooms.push(item)
+				} else search(item.children)
+			})
+		}
+		search(this.buildingGroup.children)
+		const iconTags = allRooms.map((room: THREE.Group) => {
+			return this.tracker(this.createIconTag(room, iconName, html))
+		})
+		return iconTags
+	}
+	createIconTag(mesh: THREE.Group, tagName: string = 'icon', iconHtml?: string) {
+		if (this.iconTagsUUid.has(tagName + mesh.uuid)) return
+		this.iconTagsUUid.add(tagName + mesh.uuid)
+		const labels = new modules.Labels()
+		const p = mesh.getWorldPosition(new THREE.Vector3())
+		const name = mesh.name
+		let px = p.x
+		const iconTag = labels.iconTag(iconHtml)
+		if (name === 'roomL') px = p.x - uWidth / 4
+		if (name === 'roomR') px = p.x + uWidth / 4
+		const z = 45
+		iconTag.position.set(px, p.y + uHeight / 2, p.z)
+		iconTag.name = tagName
+		iconTag.userData.targetMeshUUid = mesh.uuid
+		iconTag.userData.positionOrigin = new THREE.Vector3(px, p.y + uHeight / 2, p.z)
+		this.iconTags.push(iconTag)
+		this.viewer.scene.add(this.tracker(iconTag))
+		gsap.to(iconTag!.position, {
+			z,
+			duration: 0.7,
+			ease: 'Bounce.inOut',
+		})
+		gsap.to(iconTag!.position, {
+			y: iconTag.position.y + 10,
+			repeat: -1,
+			yoyo: true,
+			duration: 2,
+			ease: 'Bounce.inOut',
+		})
+		console.log(iconTag)
+		return iconTag
+	}
+	resetCamera() {
+		// viewer.camera.position.set(-480, 200, 800)
+		gsap.to(this.viewer.camera.position, {
+			x: -480,
+			y: 200,
+			z: 800,
+			duration: 1,
+			ease: 'power1.inOut',
+			onComplete: () => {},
+		})
 		gsap.to(this.viewer.controls.target, {
 			x: 0,
 			y: 0,

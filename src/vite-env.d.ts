@@ -9,7 +9,7 @@ declare module '@/views/ZHSQ/modules/Viewer/viewer'
 declare module '@/views/ZHSQ/modules/SkyBoxs'
 declare module '@/views/ZHSQ/modules/Lights'
 declare module '@/views/ZHSQ/modules/trackResource'
-declare module '@/views/ZHSQ/component/BuildingDetails'
+declare module '@/views/ZHSQ/components/BuildingDetails'
 
 
 // declare module "*"

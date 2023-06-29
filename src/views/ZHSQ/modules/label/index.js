@@ -25,6 +25,10 @@ export default class Labels {
 		// label.visible = false
 		return label
 	}
+	iconTag(html = 'placehoder') {
+		const label = this.addCss2dLabel(`${html}`)
+		return label
+	}
 	nameTagByCanvas(
 		text = 'placehoder',
 		style = {
