@@ -10,7 +10,7 @@
     </div>
 </template>
 <script lang="ts" setup>
-import { ref, getCurrentInstance, defineComponent, onMounted, onBeforeUnmount } from 'vue'
+import { ref, getCurrentInstance, onMounted } from 'vue'
 let boxHeight = ref(`248px`)
 const props = defineProps({
     animate: {
@@ -26,10 +26,11 @@ const props = defineProps({
         default: false
     }
 })
+props
 onMounted(() => {
     const instance = getCurrentInstance()
-    const JsBuildingBox = instance.refs.JsBuildingBox
-    boxHeight.value = JsBuildingBox?.clientHeight + 'px'
+    const JsBuildingBox = instance!.refs.JsBuildingBox
+    boxHeight.value = JsBuildingBox!.clientHeight + 'px'
 })
 </script>
 <style lang="scss" scoped>

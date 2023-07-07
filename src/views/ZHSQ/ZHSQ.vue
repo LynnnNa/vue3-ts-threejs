@@ -13,6 +13,7 @@
 		</div>
 		<BuildingDetails v-if="showIntroduction" class="float-wraper" :clickedRoomId="clickedRoomId"
 						 @reset="reset"
+						 @clear="clear"
 						 @changeTypeSpecial="changeTypeSpecial" />
 
 	</div>
@@ -21,13 +22,14 @@
 import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { modules } from '@/views/ZHSQ/modules'
-import ResourceTracker from '@/views/ZHSQ/modules/trackResource'
+import ResourceTracker from '/@/views/ZHSQ/modules/trackResource'
 import * as THREE from 'three'
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js'
 import BuildingDetails from '/@/views/ZHSQ/components/BuildingDetails.vue'
 import Box2 from '/@/views/ZHSQ/components/boxes/Box2.vue'
 import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer'
 import svgs from '/@/views/ZHSQ/modules/label/svg'
+import { gsap } from 'gsap'
 let clickedRoomId = ref('')
 // export default defineComponent({
 // name: 'ZHSQ',
@@ -38,7 +40,7 @@ let clickedRoomId = ref('')
 let showIntroduction = ref(false)
 let progress = ref(0)
 let _progress = 0
-let bData = { name: '移动家属楼', fNum: 7, uNum: 2 }
+let bData = { name: '移动家属楼', fNum: 7, uNum: 4 }
 let toCreateBuilding = true
 onMounted(() => {
 	const { query } = useRoute()
@@ -52,12 +54,7 @@ onMounted(() => {
 	init()
 })
 onBeforeUnmount(() => {
-	try {
-		viewer.distroy()
-		resMgr && resMgr.dispose()
-	} catch (e) {
-		console.log(e)
-	}
+	distory()
 })
 let viewer: typeof modules.Viewer
 let skyBoxs: typeof modules.SkyBoxs
@@ -68,28 +65,67 @@ let gui: GUI
 let resMgr = new ResourceTracker()
 let tracker = resMgr.track.bind(resMgr)
 let hasInitGlobleEvent = false
+let environment: typeof modules.Ground
+let ground: typeof modules.Ground
+let ways: typeof modules.Ground
+let grid: typeof modules.Ground
+let buildingOther: typeof modules.Ground
 watch(
 	progress,
-	(n: number) => {
+	async (n: number) => {
 		if (n >= 100) {
 			Object.keys(buildings).forEach(m => {
 				viewer.scene.add(buildings[m])
 			})
+			initEnvironment()
+			building.resetCamera()
+			await building.clipBuiding()
 			startEventForBuilding()
+			viewer.scene.add(grid)
+			gsap.to(buildingOther.children[0].material, {
+				opacity: 0.1,
+				duration: 1,
+				ease: 'power1.inOut',
+				onComplete: () => { },
+			})
+			environment.addWaysLightAnimation()
+			gsap.to(ways.children[1].children[0].material, {
+				opacity: 0.4,
+				duration: 1,
+				ease: 'power1.inOut',
+				onComplete: () => { },
+			})
+			viewer.controls.maxDistance = 7300
 			setTimeout(() => {
 				showIntroduction.value = true
 			}, 200);
 		}
 	}
 )
+function distory() {
+	try {
+		viewer.distroy()
+		resMgr && resMgr.dispose()
+	} catch (e) {
+		console.log(e)
+	}
+}
+function initEnvironment() {
+	gsap.to(ground.children[0].material, {
+		opacity: 0.1,
+		duration: 1,
+		ease: 'power1.inOut',
+		onComplete: () => { },
+	})
+}
 function init() {
 	/* viewver */
 	viewer = new modules.Viewer('demo')
 	viewer.tracker = tracker
-	viewer.controls.maxPolarAngle = Math.PI / 1.8 //限制controls的上下角度范围
-	viewer.camera.position.set(-480, 200, 800)
+	// viewer.controls.maxPolarAngle = Math.PI / 2.2 //限制controls的上下角度范围
+	// viewer.camera.position.set(-480, 200, 800)
+	viewer.camera.position.set(9978, 4762, 9133)
 	viewer.controls.minDistance = 300
-	viewer.controls.maxDistance = 1300
 	// viewer.percentage = progress // 渲染进度
 	/* 天空盒 */
 	skyBoxs = new modules.SkyBoxs(viewer)
@@ -97,20 +133,23 @@ function init() {
 	/* 光源 */
 	lights = new modules.Lights(viewer)
 	lights.addAmbientLight() // 添加环境光源
-	lights.addDirectionalLight([-100, -100, 100], {
+	lights.addDirectionalLight([200, -50, 200], {
 		// 添加平行光源
 		color: '#808080',
 		intensity: 3,
 		castShadow: true,
 	})
+	/* 地面 */
+	loadingGroud()
 	/* 创建楼栋 */
 	if (toCreateBuilding) buildings = createBuilding(bData.name, bData.uNum, bData.fNum)
 	/* 调试 */
-	development()
+	setTimeout(() => {
+		development()
+	}, 1000);
 	animate()
 }
 function animate() {
-	// console.log(progress.value, _progress)
 	if (!buildings?.building || progress.value >= 100) return
 	requestAnimationFrame(animate)
 	_progress++
@@ -121,13 +160,28 @@ function animate() {
 			progress.value += 0.5
 	}
 }
-function createBuilding(name: string, uNum: number, fNum: number) {
+function loadingProgress(num = 0) {
+	// progress.value = num * 100
+}
+async function loadingGroud() {
+	environment = new modules.Ground(viewer)
+	ground = await environment.addGround(loadingProgress)
+	buildingOther = await environment.addBuildings()
+	grid = await environment.addGrid()
+	ways = await environment.addWays()
+}
+function resetParams() {
 	resMgr.dispose()
+	activeTypes.clear()
 	// status.value = ''
 	showIntroduction.value = false
 	buildings = {}
 	progress.value = 0
 	_progress = 0
+	viewer.controls.maxDistance = 11000
+	viewer.camera.position.set(9978, 4762, 9133)
+}
+function createBuilding(name: string, uNum: number, fNum: number) {
 	bData.name = name || bData.name
 	bData.uNum = uNum || bData.uNum
 	bData.fNum = fNum || bData.fNum
@@ -137,6 +191,10 @@ function createBuilding(name: string, uNum: number, fNum: number) {
 }
 function reset() {
 	building.resetCamera()
+}
+function clear() {
+	building.clearIconTags()
+	activeTypes.clear()
 }
 /* 建筑事件 */
 function startEventForBuilding() {
@@ -155,9 +213,12 @@ function startEventForBuilding() {
 		return
 	})
 	viewer.startSelectEvent('click', (Mesh: THREE.Mesh, point: THREE.Vector3) => {
-		if (!Mesh) {
+		// const env = ['EXPORT_GOOGLE_SAT_WM','Ways002','Ways001']
+		// if (!Mesh || env.indexOf(Mesh.name)>-1) {
+		if (!Mesh || Mesh.name !== 'room') {
 			building.removeClickRoom()
 			clickedRoomId.value = ''
+			// building.clearIconTags()
 			// building.resetCamera()
 			return
 		}
@@ -166,22 +227,26 @@ function startEventForBuilding() {
 			clickedRoomId.value = Mesh.parent?.userData.name
 			return
 		}
+
 	})
 	hasInitGlobleEvent = true
 }
 /* 特殊人群 */
+const activeTypes = new Set()
 function changeTypeSpecial(item) {
 	// console.log(arguments)
 	const { icon } = item
+	if (activeTypes.has(icon)) return
+	activeTypes.add(icon)
 	const html = svgs[icon]
-	building.clearIconTags()
+	// building.clearIconTags()
 	const _tableData = [
 		'1单元101',
 		'2单元302',
 		'3单元401',
 		'4单元701',
 	]
-	if(!html) return
+	if (!html) return
 	const iconTagsGroup = building.addIconTags(_tableData, icon, html)
 	console.log(iconTagsGroup)
 	iconTagsGroup.forEach(icon => {
@@ -190,11 +255,12 @@ function changeTypeSpecial(item) {
 }
 function development() {
 	window.THREE = THREE
-	// window.viewer = viewer
+	window.viewer = viewer
 	// window.building = building
 	// window.nameTag = nameTag
 	/* axes */
-	// const axes = new THREE.AxesHelper(700) // 红x  绿y 蓝z
+	// const axes = new THREE.AxesHelper(300) // 红x  绿y 蓝z
+	// axes.opacity = 0.2
 	// viewer.scene.add(axes)
 	/* Stats */
 	viewer.addStates()
@@ -213,25 +279,71 @@ function initGui() {
 	// this.gui.addColor(params, 'cssColor')
 	// const b = { fNum: bData.fNum, uNum: bData.uNum }
 	const params = {
+		楼栋颜色: '#ff00ff',
 		楼栋名称: bData.name,
 		楼层数: bData.fNum,
 		单元数: bData.uNum,
 		重新创建楼栋() {
 			console.log('重新创建楼栋', this)
-			buildings = createBuilding(this.楼栋名称, this.单元数, this.楼层数)
-			animate()
+			resetParams()
+			setTimeout(() => {
+				loadingGroud()
+				buildings = createBuilding(this.楼栋名称, this.单元数, this.楼层数)
+				animate()
+			}, 100);
 		},
+
+		scale: ground.scale.x,
+		x: ground.position.x,
+		y: ground.position.y,
+		z: ground.position.z,
 	}
 	gui.add(params, '楼栋名称')
 	gui.add(params, '楼层数', 1, 10).step(1)
 	gui.add(params, '单元数', 1, 5).step(1)
+	// gui.addColor(params, '楼栋颜色')
 	gui.add(params, '重新创建楼栋')
+	gui.addColor(params, '楼栋颜色').onChange(e => {
+		function search(children: Array<THREE.Object3D>) {
+			children.forEach((item) => {
+				/* 房间材质 */
+				if ('room'.indexOf(item.name) > -1 && item.name) {
+					item.material = new THREE.MeshPhysicalMaterial({
+						color: e,
+						transparent: true, // 透明度设置为 true
+						opacity: 0.9, // 设置透明度
+						roughness: 0,
+						metalness: 0,
+						envMapIntensity: 1,
+						transmission: 0, // 折射度，表示光线经过材料时的衰减程度
+						clearcoat: 1,
+						clearcoatRoughness: 0,
+						// refractionRatio: 2.5, // 折射率，控制光的折射程度
+					})
+				}
+				/* 房间边线 */
+				if (item.isMesh) {
+				} else search(item.children)
+			})
+		}
+		search(buildings.building?.children)
+	})
+
+	// gui.add(params, 'scale', 1, 10).onChange(e => {
+	// 	ways.scale.set(e, e, e)
+	// })
+	// gui.add(params, 'x', -5700, 10000).step(20).onChange(e => {
+	// 	ways.position.setX(e)
+	// })
+	// gui.add(params, 'y', -10000, 10000).onChange(e => {
+	// 	ways.position.setY(e)
+	// })
+	// gui.add(params, 'z', -1000, 1000).onChange(e => {
+	// 	ways.position.setZ(e)
+	// })
 	return gui
 }
-		// return {
-		// }
-	// },
-// })
+
 </script>
 <style lang="scss">
 .progress {

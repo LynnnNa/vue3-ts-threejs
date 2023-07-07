@@ -6,7 +6,7 @@
     </div>
 </template>
 <script lang="ts" setup>
-import { watch } from 'vue'
+// import { watch } from 'vue'
 const props = defineProps({
     isActive: {
         type: Boolean,
@@ -17,6 +17,7 @@ const props = defineProps({
         default: false
     }
 })
+props
 // watch(
 //     ()=>props.isActive,
 //     (news) => {

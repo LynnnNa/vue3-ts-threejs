@@ -1,5 +1,4 @@
 import * as THREE from 'three'
-import Unit from './unit'
 export function setPotion(c = new THREE.Vector3(), target, x = 0, y = 0, z = 0) {
 	target.position.set(c.x + x, c.y + y, c.z + z)
 }
@@ -116,10 +115,39 @@ export const mirrorCoords = (Array, direction = 'X') => {
 	return res.reverse()
 }
 export const remove = (obj, scence) => {
+	// console.log(obj)
 	if (!obj) return
 	if (!obj.isObject3D) return
 	// console.log('remove', obj)
+	//typeof obj
+	obj.children?.forEach((o) => {
+		if (o.isObject3D) {
+			scence.remove(o)
+			obj.clear()
+		}
+	})
 	scence.remove(obj)
 	obj.clear()
+}
+export const createOutline = (mesh, color = '#36BCFF', opacity = 0.4) => {
+	const position = mesh.getWorldPosition(new THREE.Vector3())
+	const lineGroup = new THREE.Group()
+	const lineMeterial = new THREE.LineBasicMaterial({
+		color,
+		transparent: true,
+		opacity,
+		depthWrite: false,
+		side: THREE.DoubleSide,
+	})
+	const edges = new THREE.EdgesGeometry(mesh.geometry)
+	const lineS = new THREE.LineSegments(edges, lineMeterial)
+	lineGroup.add(lineS)
+	const { x, y, z } = position
+	lineGroup.position.set(x, y, z)
+	const { direction } = mesh.userData
+	if (direction === 'Y') {
+		lineGroup.rotateX(Math.PI / 2)
+	}
+	return lineGroup
 }
 export default {}

@@ -22,7 +22,7 @@ export default class ModelLoder {
 		this.loadModel(
 			url,
 			(model) => {
-				this.scene.add(model.object)
+				this.scene.add(this.viewer.tracker(model.object))
 				callback && callback(model)
 			},
 			(num) => {

@@ -1,11 +1,10 @@
-import { setPotion, createGroup, mirrorCoords } from './common'
+import { setPotion, createGroup, mirrorCoords, createOutline } from './common'
 import Board from './board'
 import * as THREE from 'three'
+import { m_blue, m_glass, color_floorslab, color_wall } from '/@/views/ZHSQ/modules/building/m'
 
-const color_wall = '#d4d4d4'
-const color_floorslab = '#f8a23f'
 export const uWidth = 200
-export const uHeight = 40
+export const uHeight = 50
 export const uDept = 80
 const roomPath = [
 	{ x: 0, y: 0 },
@@ -20,7 +19,7 @@ const roomPath = [
 ]
 const roofLong = 4 // 房盖延伸长度
 const roofPath = [
-	{ x: -60 - roofLong, y: 20 + roofLong },
+	{ x: -60 + roofLong, y: 20 + roofLong },
 	{ x: 60 - roofLong, y: 20 + roofLong },
 	{ x: 60 - roofLong, y: 40 + roofLong },
 	{ x: 100 + roofLong, y: 40 + roofLong },
@@ -28,16 +27,17 @@ const roofPath = [
 	{ x: -100 - roofLong, y: -40 - roofLong },
 	{ x: -100 - roofLong, y: 40 + roofLong },
 	{ x: -60 + roofLong, y: 40 + roofLong },
-	{ x: -60 + roofLong, y: -20 - roofLong },
-	{ x: -60 - roofLong, y: 20 + roofLong },
+	{ x: -60 + roofLong, y: 20 + roofLong },
 ]
 export default class Unit {
-	constructor(name = '', currentFloor = 0, center = new THREE.Vector3(0, 0, 0), unitType = 1) {
+	constructor(viewer, name = '', currentFloor = 0, center = new THREE.Vector3(0, 0, 0), unitType = 1) {
+		this.viewer = viewer
 		this.uName = name
 		this.currentFloor = currentFloor
 		this.c = center
 		this.unitType = unitType
 		this.hasRoof = false
+		this.bPlane
 		return this
 	}
 	// addUserData(){
@@ -74,11 +74,15 @@ export default class Unit {
 		setPotion(this.c, group, x, y, z)
 		return group
 	}
+	/* 设置剪裁 */
+	setClip(bPlane){
+		this.bPlane = bPlane
+	}
 	/* 住户 */
 	room(isMirror = false) {
 		let path = roomPath
 		if (isMirror) path = mirrorCoords(path)
-		const _b = new Board('room', path, 39, 'Y', isMirror)
+		const _b = new Board('room', path, uHeight - 1, 'Y', isMirror)
 		const tb = new THREE.MeshLambertMaterial({ color: color_wall })
 		const wload = new THREE.TextureLoader().load('/texture/uvwins.png')
 		// wload.wrapS = THREE.RepeatWrapping
@@ -131,7 +135,7 @@ export default class Unit {
 		let group = []
 		// 空间
 		const box = () => {
-			const g = new THREE.BoxGeometry(40, 39, 1)
+			const g = new THREE.BoxGeometry(40, uHeight - 1, 1)
 			let img = '/texture/lang.png'
 			if (this.currentFloor === 0) img = '/texture/unitD.jpeg'
 			let texture = new THREE.TextureLoader().load(img)
@@ -140,6 +144,7 @@ export default class Unit {
 			const wallFloor = new THREE.MeshLambertMaterial({ color: color_floorslab }) // 橙
 			const Mesh = new THREE.Mesh(g, [wallFloor, wallFloor, wall, wallFloor, window, window]) // 右左 上
 			setPotion(new THREE.Vector3(), Mesh, 0, 20.5, 19.5)
+			Mesh.name = 'corridorWindow'
 			return Mesh
 		}
 		group = group.concat(box())
@@ -187,28 +192,11 @@ export default class Unit {
 	/* 单元房盖 */
 	roof() {
 		const path = roofPath
-		const Meter1 = new THREE.MeshLambertMaterial({ color: color_floorslab })
-		const b = new Board('floorslab', path, 3, 'Y')
-		b.materials = Meter1
+		const Meter1 = new THREE.MeshPhongMaterial({ color: color_floorslab })
+		const b = new Board('roof', path, 3, 'Y', m_glass.clone())
 		const f = b.createShape().create()
-		setPotion(new THREE.Vector3(), f, 0, 41, 0)
+		setPotion(new THREE.Vector3(), f, 0, uHeight + 3, 0)
+		// f.userData.lineGroup = createOutline(f)
 		return [f]
-	}
-	//更新纹理贴图的方法
-	updateUV(e) {
-		// 一种方法，直接全写在一个方法内
-		//texture.matrix.setUvTransform( API.offsetX, API.offsetY, API.repeatX, API.repeatY, API.rotation, API.centerX, API.centerY );
-
-		// 另一种方法，分开写
-		// console.log(this)
-		// this.material.map.matrix
-		// 	.identity() //矩阵重置
-		// 	.translate(-this.gui.centerX, -this.gui.centerY) //设置中心点
-		// 	.rotate(this.gui.rotation) // 旋转
-		// 	.scale(this.gui.repeatX, this.gui.repeatY) //缩放
-		// 	.translate(this.gui.centerX, this.gui.centerY) //设置中心点
-		// 	.translate(this.gui.offsetX, this.gui.offsetY) //偏移
-		// this.material.map.needsUpdate = true
-		this.texture.repeat.set(this.gui.repeatX, this.gui.repeatY)
 	}
 }

@@ -3,8 +3,8 @@
 </template>
 <script lang="ts" setup>
 import { Ref, ref, watch } from 'vue';
-import * as echarts from "echarts";
-import type { EChartsOption } from 'echarts';
+// import * as echarts from "echarts";
+// import type { EChartsOption } from 'echarts';
 import { useECharts } from '/@/hooks/web/useECharts';
 const props = defineProps({
     loading: Boolean,

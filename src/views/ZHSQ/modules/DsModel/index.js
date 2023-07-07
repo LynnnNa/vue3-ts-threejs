@@ -9,6 +9,7 @@ export default class DsModel {
 	/**
 	 * 模型对象，带相关函数
 	 */
+	object
 	constructor(_model, _viewer) {
 		this.model = _model
 		this.object = _model.scene || _model // 模型内部的模型对象，不晓得threejs里面要叫scene,跟场景的scene不是一个东西

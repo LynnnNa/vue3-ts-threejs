@@ -1,4 +1,4 @@
-import { WebGLRenderer, PerspectiveCamera, Scene, Color, Vector2 } from 'three'
+import { WebGLRenderer, PerspectiveCamera, OrthographicCamera, Scene, Color, Vector2 } from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import Stats from 'three/examples/jsm/libs/stats.module.js'
 import MouseEvent from '../MouseEvent'
@@ -44,7 +44,16 @@ export default class Viewer {
         }
      */
 	addAnimate(animate) {
+		// console.log(animate)
 		this.animateEventList.push(animate)
+	}
+	removeAnimate(name) {
+		let index = null
+		this.animateEventList.forEach((_event, i) => {
+			if (_event.name === name) index = i
+		})
+		if (index !== null) this.animateEventList.splice(index, 1)
+		// console.log(this.animateEventList)
 	}
 	/* 状态检测 */
 	addStates() {
@@ -107,7 +116,12 @@ export default class Viewer {
 	_initCamera() {
 		// 渲染相机
 		// 视野范围 画布的宽高比 近平面 远平面
-		this.camera = new PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 10000)
+		var width = window.innerWidth // 窗口宽度
+		var height = window.innerHeight // 窗口高度
+		var k = width / height // 窗口宽高比
+		var s = 1300 // 三维场景显示范围控制系数。系数越大，显示的范围越大
+		this.camera = new PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 40000)
+		// this.camera = new OrthographicCamera(-s * k, s * k, s, -s, 1, 2000);
 		this.camera.position.set(50, 0, 50)
 		this.camera.lookAt(0, 0, 0)
 	}
@@ -152,7 +166,7 @@ export default class Viewer {
 			// 全局的公共动画函数，添加函数可同步执行
 			_this.animateEventList.forEach((event) => {
 				// console.log(event)
-				event.fun && event.content && event.fun(event.content)
+				event.fun && event.fun(event.content)
 			})
 		}
 
@@ -235,3 +249,15 @@ export default class Viewer {
 		this.composer.render()
 	}
 }
+
+Viewer.removeAnimate = undefined
+
+Viewer.camera = undefined
+
+Viewer.controls = undefined
+
+Viewer.renderer = undefined
+
+Viewer.tracker = undefined
+Viewer.addAnimate = undefined
+Viewer.scene = undefined

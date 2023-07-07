@@ -8,12 +8,12 @@ import * as THREE from 'three'
  * @param {String} direction 延伸方向
  */
 export default class Board {
-	constructor(name = '', pathArr = [], height = 1, direction = 'Z') {
+	constructor(name = '', pathArr = [], height = 1, direction = 'Z',materials) {
 		this.name = name
 		this.pathArr = pathArr
 		this.height = height
 		this.direction = direction
-		this.materials
+		this.materials = materials
 		// return this.create
 	}
 	addHole(hole) {

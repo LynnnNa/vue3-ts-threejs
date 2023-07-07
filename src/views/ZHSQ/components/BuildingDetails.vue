@@ -2,25 +2,28 @@
     <div class="">
         <div class="body-left animate__animated" :class="animateCssBuilding">
             <Box2 class="building" :animate="true">
-                <div class="content">
-                    <!-- https://img95.699pic.com/photo/50138/7372.jpg_wh860.jpg -->
-                    <h2>地中海小区一期2号楼 </h2>
-                    <el-row :gutter="20" class="ld-leader">
-                        <el-col :span="8">
-                            <el-avatar shape="square" :size="50"
-                                       src="http://139.215.216.9:9260/2cedde49-b0fa-4719-ab25-d6c3e6c75314.png" />
+                <el-scrollbar max-height="320" :noresize="true" :always="true">
+                    <div class="content">
+                        <el-image style="width: 100%; height: 100px; margin-bottom: 5px;"
+                                  src="https://img95.699pic.com/photo/50138/7372.jpg_wh860.jpg" />
+                        <h2>地中海小区一期2号楼 </h2>
+                        <el-row :gutter="20" class="ld-leader">
+                            <el-col :span="8">
+                                <el-avatar shape="square" :size="50"
+                                           src="http://139.215.216.9:9260/2cedde49-b0fa-4719-ab25-d6c3e6c75314.png" />
 
-                        </el-col>
-                        <el-col :span="16" class="">
-                            <div>楼栋长</div>
-                            <div>孙家一</div>
-                            <div>177xxxx2222</div>
-                        </el-col>
-                    </el-row>
-                    <div class="describe">
-                        描述内容描述内容描述内容,描述内容描述内容描述内容,描述内容描述内容描述内容,描述内容描述内容描述内容,描述内容描述内容描述内容,描述内容描述内容描述内容,描述内容描述内容描述内容,描述内容描述内容描述内容,描述内容描述内容描述内容,描述内容描述内容描述内容.
+                            </el-col>
+                            <el-col :span="16" class="">
+                                <div>楼栋长</div>
+                                <div>孙家一</div>
+                                <div>177xxxx2222</div>
+                            </el-col>
+                        </el-row>
+                        <div class="describe">
+                            描述内容描述内容描述内容,描述内容描述内容描述内容,描述内容描述内容描述内容,描述内容描述内容描述内容,描述内容描述内容描述内容,描述内容描述内容描述内容,描述内容描述内容描述内容,描述内容描述内容描述内容,描述内容描述内容描述内容,描述内容描述内容描述内容.
+                        </div>
                     </div>
-                </div>
+                </el-scrollbar>
             </Box2>
             <Box2 :hover="false" class="Population">
                 <!-- <h3>人口信息</h3> -->
@@ -57,8 +60,11 @@
                 </Box2>
             </Box2>
         </div>
-        <div class="room-temp animate__animated animate__fadeInRight" @click="$emit('reset')">
+        <div class="btn-reset animate__animated animate__fadeInRight" @click="$emit('reset')">
             <Box3>重置视角</Box3>
+        </div>
+        <div class="btn-clear animate__animated animate__fadeInRight" @click="$emit('clear')">
+            <Box3>清空图标</Box3>
         </div>
         <div v-show="showRoom" class="room animate__animated"
              :class="animateCssRoom">
@@ -190,15 +196,15 @@ watch(
                 loadingRoomData.value = false
             }, 1000);
         }
-        emit('changeTypeSpecial',typeSpecialItem)
+        emit('changeTypeSpecial', typeSpecialItem)
     }
 )
-let typeSpecialItem:Object
+let typeSpecialItem: Object
 function iconDetail(index: number) {
     const item = btns[index]
     if (!item.num) return
     btns.forEach(b => {
-        delete b.active
+        b.active = false
     })
     item.active = true
     typeSpecialId.value = item.id
@@ -206,10 +212,16 @@ function iconDetail(index: number) {
 }
 </script>
 <style lang="scss" scoped>
-.room-temp {
+.btn-reset {
     position: fixed;
     right: 20px;
     top: 300px;
+}
+
+.btn-clear {
+    position: fixed;
+    right: 20px;
+    top: 400px;
 }
 
 .body-left {

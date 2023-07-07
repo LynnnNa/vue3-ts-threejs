@@ -1,10 +1,13 @@
 import * as THREE from 'three'
-import modules from '@/views/ZHSQ/modules'
-import { setPotion, remove } from '@/views/ZHSQ/modules/building/common'
-import Unit, { uWidth, uHeight /* , uDept */ } from '@/views/ZHSQ/modules/building/unit'
+import modules from '/@/views/ZHSQ/modules'
+import { setPotion, remove, createGroup, createOutline } from '/@/views/ZHSQ/modules/building/common'
+import { m_glass_2, m_glass, m_fff, m_cyanine, color_line } from '/@/views/ZHSQ/modules/building/m'
+import Unit, { uWidth, uHeight /* , uDept */ } from '/@/views/ZHSQ/modules/building/unit'
+import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer'
 import { gsap } from 'gsap'
 export default class Building {
 	viewer: typeof modules.Viewer
+	renderer: THREE.WebGLRenderer
 	c: THREE.Vector3
 	uNum = 1
 	fNum = 1
@@ -12,22 +15,37 @@ export default class Building {
 	lastHoverMeshClone: THREE.Mesh | undefined
 	lastClickMesh: THREE.Mesh | undefined
 	lastClickMeshClone: THREE.Mesh | undefined
-	clickRoomTag: THREE.Sprite | undefined
-	nameTag: THREE.Sprite | undefined
-	roomTag: THREE.Sprite | undefined
+	clickRoomTag: CSS2DObject | undefined
+	nameTag: CSS2DObject | undefined
+	roomTag: CSS2DObject | undefined
 	buildingGroup: THREE.Group
+	roomPlane = new THREE.Plane(new THREE.Vector3(0, -1, 0), 0)
+	orridorPlane = new THREE.Plane(new THREE.Vector3(0, -1, 0), 0)
+	linePlane = new THREE.Plane(new THREE.Vector3(0, -1, 0), 0)
+	lineFadePlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0)
+	floorPlane = new THREE.Plane(new THREE.Vector3(1, 0, 0), 0)
+	floorPlane2 = new THREE.Plane(new THREE.Vector3(-1, 0, 0), 0)
+	plane = {}
+	lineGroupTemp: THREE.Group
 	lineGroup: THREE.Group
 	iconTagsUUid: Set<string> = new Set()
-	iconTags: Array<THREE.Sprite> = new Array()
+	iconTags: Array<CSS2DObject> = new Array()
 	bData = { name: '测试大楼', fNum: 7, uNum: 4 }
 	tracker: typeof modules.Viewer.tracker
+	totleHeight: number
+	totleWidth: number
+
 	constructor(viewer: typeof modules.Viewer, bData = { name: '测试大楼', fNum: 7, uNum: 4 }, center = new THREE.Vector3(0, 0, 0)) {
 		this.viewer = viewer
+		this.renderer = viewer.renderer
+		this.renderer.localClippingEnabled = true
 		this.bData = bData
 		this.c = center
 		this.uNum = bData.uNum
 		this.fNum = bData.fNum
 		this.tracker = viewer.tracker
+		this.totleHeight = uHeight * bData.fNum
+		this.totleWidth = uWidth * bData.uNum
 		return this
 	}
 	// 1: 一梯两户, 2: 一梯三户
@@ -41,15 +59,98 @@ export default class Building {
 			setPotion(new THREE.Vector3(), cFloor, x, y, 0)
 			building.push(cFloor)
 		}
-		this.buildingGroup = this.createGroup(building)
+		this.buildingGroup = createGroup(building)
 		this.buildingGroup.userData.name = name
 		this.buildingGroup.name = 'building'
-		setPotion(new THREE.Vector3(), this.buildingGroup, 0, (-uHeight * (this.fNum - 1)) / 2, 0)
-		this.resetCamera()
+		// setPotion(new THREE.Vector3(), this.buildingGroup, 0, -this.totleHeight/2, 0)
+		// this.resetCamera()
+		const { lineGroup, lineGroup2 } = this.each3dObject(building)
+		this.lineGroupTemp = lineGroup
 		return {
 			building: this.tracker(this.buildingGroup),
 			nameTag: this.tracker(this.createNameTag()),
+			lineGroup: this.tracker(lineGroup),
+			lineGroup2: this.tracker(lineGroup2),
 		}
+	}
+	clipBuiding() {
+		return new Promise((res) => {
+			const { roomPlane, orridorPlane, linePlane, lineFadePlane, floorPlane, floorPlane2 } = this
+			let tLine = -200
+			let tFloor = 0
+			let tRoom = 0
+			// let addedRoof = false
+			const animate = {
+				fun: () => {
+					// console.log('clipBuiding')
+					// if (addedRoof) return
+					if (tRoom >= this.totleHeight + 10 && tFloor >= this.totleWidth + 10) {
+						remove(this.lineGroupTemp, this.viewer.scene)
+						this.viewer.removeAnimate('clipBuiding')
+						res(true)
+						return
+					}
+					linePlane.constant = tLine = tLine + 2
+					if (tLine >= this.totleHeight) {
+						tFloor += 4
+						floorPlane.constant = tFloor
+						floorPlane2.constant = tFloor
+					}
+					if (tFloor >= this.totleWidth / 3) {
+						tRoom += 4
+						roomPlane.constant = tRoom
+						orridorPlane.constant = tRoom
+						lineFadePlane.constant = tRoom
+					}
+				},
+				name: 'clipBuiding',
+				content: null,
+			}
+			this.viewer.addAnimate(animate)
+		})
+	}
+	each3dObject(b: Array<THREE.Object3D>) {
+		// const allRooms: Array<THREE.Object3D> = []
+		const allRoomsLines: Array<THREE.Object3D> = []
+		const allRoomsLines2: Array<THREE.Object3D> = []
+		const { roomPlane, orridorPlane, linePlane, lineFadePlane, floorPlane, floorPlane2 } = this
+		function search(children: Array<THREE.Object3D>) {
+			children.forEach((item) => {
+				/* 房盖 */
+				if ('roof'.indexOf(item.name) > -1 && item.name) {
+					item.material = m_cyanine.clone()
+					item.material.clippingPlanes = [floorPlane, floorPlane2]
+				}
+				/* 楼板 */
+				if ('floorslab'.indexOf(item.name) > -1 && item.name) {
+					item.material = m_fff.clone()
+					item.material.clippingPlanes = [floorPlane, floorPlane2]
+				}
+				/* 楼道墙壁材质 */
+				if ('corridorWindow'.indexOf(item.name) > -1 && item.name) {
+					item.material = m_glass_2.clone()
+					item.material.clippingPlanes = [orridorPlane]
+				}
+				/* 房间材质 */
+				if ('room'.indexOf(item.name) > -1 && item.name) {
+					item.material = m_cyanine.clone()
+					item.material.clippingPlanes = [roomPlane]
+				}
+				/* 房间边线 */
+				if (item.isMesh) {
+					const line = createOutline(item, color_line, 0.5)
+					line.children[0].material.clippingPlanes = [linePlane, lineFadePlane]
+					const line2 = createOutline(item, 'blue', 0.5)
+					line2.children[0].material.clippingPlanes = [roomPlane]
+					allRoomsLines.push(line)
+					allRoomsLines2.push(line2)
+				} else search(item.children)
+			})
+		}
+		search(b)
+		const lineGroup = createGroup(allRoomsLines)
+		const lineGroup2 = createGroup(allRoomsLines2)
+		return { lineGroup, lineGroup2 }
 	}
 	createFloor(unitType = 1, currentFloor: number, isTop = false) {
 		let group: Array<THREE.Group> = []
@@ -58,25 +159,18 @@ export default class Building {
 		/* 计算每个单元的中心点 */
 		for (let i = 0; i < this.uNum; i++) {
 			const x = uWidth * (i - n)
-			const _u = new Unit(`${i + 1}单元`, currentFloor, new THREE.Vector3(x, 0, 0), unitType)
+			const _u = new Unit(this.viewer, `${i + 1}单元`, currentFloor, new THREE.Vector3(x, 0, 0), unitType)
 			if (isTop) _u.hasRoof = true
+			// _u.setClip(this.buildingPlane)
 			const _unit = _u.createUnit()
 			group = group.concat(_unit)
 		}
-		// const unit = new Unit(this.c, unitType).createUnit()
-		const groupFoor = this.createGroup(group)
+		const groupFoor = createGroup(group)
 		// 偶数 想x正方向挪半个单元宽度
 		if (!odd) {
 			setPotion(new THREE.Vector3(), groupFoor, uWidth / 2)
 		}
 		return groupFoor
-	}
-	createGroup(layers: Array<THREE.Group>) {
-		const group = new THREE.Group()
-		layers.forEach((node) => {
-			group.add(node)
-		})
-		return group
 	}
 	addRoomTag(mesh: THREE.Mesh, point: THREE.Vector3) {
 		if (this.roomTag && mesh.uuid === this.roomTag.userData.targetMeshUUid) return
@@ -111,7 +205,7 @@ export default class Building {
 		// console.log(size)
 		const labels = new modules.Labels()
 		this.nameTag = labels.nameTag(this.bData.name)
-		this.nameTag!.position.set(0, model.max.y + 30, 0)
+		this.nameTag!.position.set(0, model.max.y + 50, 0)
 		this.nameTag!.name = this.buildingGroup.userData.name
 		// this.viewer.scene.add(this.tracker(this.nameTag))
 		return this.nameTag
@@ -207,16 +301,16 @@ export default class Building {
 	}
 	clickChangeCamera(x: number, y: number, z: number) {
 		gsap.to(this.viewer.camera.position, {
-			x: x > 0 ? x - 140 : x + 140,
-			y: y > 0 ? y + 140 : y + 140,
+			x: -this.totleWidth/2 + x/10,
+			y: this.totleHeight/2 + y/10,
 			z: this.viewer.camera.position.z > 0 ? 800 : -800,
 			duration: 1,
 			ease: 'power1.inOut',
 			onComplete: () => {},
 		})
 		gsap.to(this.viewer.controls.target, {
-			x: x > 0 ? x - 40 : x + 40,
-			y: y > 0 ? y + 0 : y + 0,
+			x: 0,
+			y: y,
 			z: z,
 			duration: 1,
 			ease: 'power1.inOut',
@@ -224,9 +318,13 @@ export default class Building {
 		})
 	}
 	clearIconTags() {
-		remove(this.iconTags, this.viewer.scene)
+		console.log('clear')
+		this.iconTags.forEach((icon) => {
+			remove(icon, this.viewer.scene)
+		})
 	}
 	addIconTags(roomIds: Array<object>, iconName = '', html = '') {
+		roomIds
 		// const ids = foomIds.map()
 		// roomIds.forEach(r=>{
 		// 	this.addIconTag(r.roomId)
@@ -250,14 +348,16 @@ export default class Building {
 	createIconTag(mesh: THREE.Group, tagName: string = 'icon', iconHtml?: string) {
 		if (this.iconTagsUUid.has(tagName + mesh.uuid)) return
 		this.iconTagsUUid.add(tagName + mesh.uuid)
+		mesh.userData.hasIconNum = mesh.userData.hasIconNum || 0
+		mesh.userData.hasIconNum++
 		const labels = new modules.Labels()
 		const p = mesh.getWorldPosition(new THREE.Vector3())
 		const name = mesh.name
 		let px = p.x
 		const iconTag = labels.iconTag(iconHtml)
-		if (name === 'roomL') px = p.x - uWidth / 4
-		if (name === 'roomR') px = p.x + uWidth / 4
-		const z = 45
+		if (name === 'roomL') px = p.x - uWidth / 4 + (mesh.userData.hasIconNum - 1) * 15
+		if (name === 'roomR') px = p.x + uWidth / 4 - (mesh.userData.hasIconNum - 1) * 15
+		// const z = 65
 		iconTag.position.set(px, p.y + uHeight / 2, p.z)
 		iconTag.name = tagName
 		iconTag.userData.targetMeshUUid = mesh.uuid
@@ -265,27 +365,27 @@ export default class Building {
 		this.iconTags.push(iconTag)
 		this.viewer.scene.add(this.tracker(iconTag))
 		gsap.to(iconTag!.position, {
-			z,
+			z: 10,
 			duration: 0.7,
 			ease: 'Bounce.inOut',
 		})
 		gsap.to(iconTag!.position, {
-			y: iconTag.position.y + 10,
+			y: iconTag.position.y - 10,
 			repeat: -1,
 			yoyo: true,
 			duration: 2,
 			ease: 'Bounce.inOut',
 		})
-		console.log(iconTag)
+		// console.log(iconTag)
 		return iconTag
 	}
 	resetCamera() {
 		// viewer.camera.position.set(-480, 200, 800)
 		gsap.to(this.viewer.camera.position, {
 			x: -480,
-			y: 200,
+			y: 400,
 			z: 800,
-			duration: 1,
+			duration: 1.5,
 			ease: 'power1.inOut',
 			onComplete: () => {},
 		})
