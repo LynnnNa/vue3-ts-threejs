@@ -5,17 +5,17 @@
                 <el-scrollbar max-height="320" :noresize="true" :always="true">
                     <div class="content">
                         <el-image style="width: 100%; height: 100px; margin-bottom: 5px;"
-                                  src="https://img95.699pic.com/photo/50138/7372.jpg_wh860.jpg" />
+                                  src="/images/7372.jpg_wh860.jpg" />
                         <h2>地中海小区一期2号楼 </h2>
                         <el-row :gutter="20" class="ld-leader">
                             <el-col :span="8">
                                 <el-avatar shape="square" :size="50"
-                                           src="http://139.215.216.9:9260/2cedde49-b0fa-4719-ab25-d6c3e6c75314.png" />
+                                           src="/images/R-C.jpeg" />
 
                             </el-col>
                             <el-col :span="16" class="">
                                 <div>楼栋长</div>
-                                <div>孙家一</div>
+                                <div>孙家家</div>
                                 <div>177xxxx2222</div>
                             </el-col>
                         </el-row>
@@ -97,28 +97,28 @@ import Population from './analysis/Population.vue'
 const emit = defineEmits(['changeTypeSpecial']);
 const _tableData = [
     {
-        name: '刘玲英',
+        name: '刘某某',
         roomName: '1单元101',
         sex: '女',
-        idCard: '220623************920'
+        idCard: '220521************920'
     },
     {
-        name: '刘玲英',
+        name: '刘某某',
         roomName: '2单元302',
-        sex: '女',
-        idCard: '220623************920'
+        sex: '男',
+        idCard: '220521************920'
     },
     {
-        name: '刘玲英',
+        name: '刘某某',
         roomName: '3单元401',
         sex: '女',
-        idCard: '220623************920'
+        idCard: '220521************920'
     },
     {
-        name: '刘玲英',
+        name: '刘某某',
         roomName: '4单元701',
-        sex: '女',
-        idCard: '220623************920'
+        sex: '男',
+        idCard: '220521************920'
     },
 ]
 let tableData = reactive(new Array())

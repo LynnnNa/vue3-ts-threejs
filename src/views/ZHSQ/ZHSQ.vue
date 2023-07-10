@@ -38,6 +38,7 @@ let clickedRoomId = ref('')
 // setup() {
 // let status = ref('')
 let showIntroduction = ref(false)
+let loadingModuleGround = ref(0)
 let progress = ref(0)
 let _progress = 0
 let bData = { name: '移动家属楼', fNum: 7, uNum: 4 }
@@ -73,32 +74,35 @@ let buildingOther: typeof modules.Ground
 watch(
 	progress,
 	async (n: number) => {
+		console.log(n)
 		if (n >= 100) {
-			Object.keys(buildings).forEach(m => {
-				viewer.scene.add(buildings[m])
-			})
-			initEnvironment()
-			building.resetCamera()
-			await building.clipBuiding()
-			startEventForBuilding()
-			viewer.scene.add(grid)
-			gsap.to(buildingOther.children[0].material, {
-				opacity: 0.1,
-				duration: 1,
-				ease: 'power1.inOut',
-				onComplete: () => { },
-			})
-			environment.addWaysLightAnimation()
-			gsap.to(ways.children[1].children[0].material, {
-				opacity: 0.4,
-				duration: 1,
-				ease: 'power1.inOut',
-				onComplete: () => { },
-			})
-			viewer.controls.maxDistance = 7300
-			setTimeout(() => {
-				showIntroduction.value = true
-			}, 200);
+			setTimeout(async () => {
+				Object.keys(buildings).forEach(m => {
+					viewer.scene.add(buildings[m])
+				})
+				initEnvironment()
+				building.resetCamera()
+				await building.clipBuiding()
+				startEventForBuilding()
+				viewer.scene.add(grid)
+				gsap.to(buildingOther.children[0].material, {
+					opacity: 0.1,
+					duration: 1,
+					ease: 'power1.inOut',
+					onComplete: () => { },
+				})
+				environment.addWaysLightAnimation()
+				gsap.to(ways.children[1].children[0].material, {
+					opacity: 0.4,
+					duration: 1,
+					ease: 'power1.inOut',
+					onComplete: () => { },
+				})
+				viewer.controls.maxDistance = 7300
+				setTimeout(() => {
+					showIntroduction.value = true
+				}, 200);
+			}, 1000);
 		}
 	}
 )
@@ -111,7 +115,7 @@ function distory() {
 	}
 }
 function initEnvironment() {
-	gsap.to(ground.children[0].material, {
+	gsap.to(ground?.children[0].material, {
 		opacity: 0.1,
 		duration: 1,
 		ease: 'power1.inOut',
@@ -122,7 +126,7 @@ function init() {
 	/* viewver */
 	viewer = new modules.Viewer('demo')
 	viewer.tracker = tracker
-	// viewer.controls.maxPolarAngle = Math.PI / 2.2 //限制controls的上下角度范围
+	viewer.controls.maxPolarAngle = Math.PI / 2.2 //限制controls的上下角度范围
 	// viewer.camera.position.set(-480, 200, 800)
 	viewer.camera.position.set(9978, 4762, 9133)
 	viewer.controls.minDistance = 300
@@ -147,21 +151,21 @@ function init() {
 	setTimeout(() => {
 		development()
 	}, 1000);
-	animate()
+	// animate()
 }
-function animate() {
-	if (!buildings?.building || progress.value >= 100) return
-	requestAnimationFrame(animate)
-	_progress++
-	if (_progress % 10 === 0 && progress.value < 100) {
-		if (_progress % 10 === 0 && progress.value < 88) {
-			progress.value += 15
-		} else
-			progress.value += 0.5
-	}
-}
+// function animate() {
+// 	if (!buildings?.building || progress.value >= 100) return
+// 	requestAnimationFrame(animate)
+// 	_progress++
+// 	if (_progress % 10 === 0 && progress.value < 100) {
+// 		if (_progress % 10 === 0 && progress.value < 88) {
+// 			progress.value += 15
+// 		} else
+// 			progress.value += 1
+// 	}
+// }
 function loadingProgress(num = 0) {
-	// progress.value = num * 100
+	progress.value = Math.ceil(num * 100)
 }
 async function loadingGroud() {
 	environment = new modules.Ground(viewer)
@@ -233,7 +237,7 @@ function startEventForBuilding() {
 }
 /* 特殊人群 */
 const activeTypes = new Set()
-function changeTypeSpecial(item) {
+function changeTypeSpecial(item = {icon:''}) {
 	// console.log(arguments)
 	const { icon } = item
 	if (activeTypes.has(icon)) return
@@ -249,9 +253,9 @@ function changeTypeSpecial(item) {
 	if (!html) return
 	const iconTagsGroup = building.addIconTags(_tableData, icon, html)
 	console.log(iconTagsGroup)
-	iconTagsGroup.forEach(icon => {
-		// viewer.scene.add(icon)
-	});
+	// iconTagsGroup.forEach(icon => {
+	// 	// viewer.scene.add(icon)
+	// });
 }
 function development() {
 	window.THREE = THREE
@@ -289,14 +293,14 @@ function initGui() {
 			setTimeout(() => {
 				loadingGroud()
 				buildings = createBuilding(this.楼栋名称, this.单元数, this.楼层数)
-				animate()
+				// animate()
 			}, 100);
 		},
 
-		scale: ground.scale.x,
-		x: ground.position.x,
-		y: ground.position.y,
-		z: ground.position.z,
+		// scale: ground.scale.x,
+		// x: ground.position.x,
+		// y: ground.position.y,
+		// z: ground.position.z,
 	}
 	gui.add(params, '楼栋名称')
 	gui.add(params, '楼层数', 1, 10).step(1)
