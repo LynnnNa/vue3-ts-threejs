@@ -1,22 +1,5 @@
 <template>
-	<div class="progress">
-		<el-progress v-if="progress < 100" :percentage="progress" :stroke-width="10" />
-	</div>
 	<div id="demo" class="demo"></div>
-	<div>
-		<div class="header">
-			<Box2>
-				<div class="title">
-					<StarFilled color="pink" style="width: 1.5em; height: 1.5em; margin-right: 8px" />智慧城市
-				</div>
-			</Box2>
-		</div>
-		<BuildingDetails v-if="showIntroduction" class="float-wraper" :clickedRoomId="clickedRoomId"
-						 @reset="reset"
-						 @clear="clear"
-						 @changeTypeSpecial="changeTypeSpecial" />
-
-	</div>
 </template>
 <script lang="ts" setup>
 import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
@@ -25,27 +8,14 @@ import { modules } from '@/views/ZHSQ/modules'
 import ResourceTracker from '/@/views/ZHSQ/modules/trackResource'
 import * as THREE from 'three'
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js'
-import BuildingDetails from '/@/views/ZHSQ/components/BuildingDetails.vue'
-import Box2 from '/@/views/ZHSQ/components/boxes/Box2.vue'
 import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer'
-import svgs from '/@/views/ZHSQ/modules/label/svg'
-import { gsap } from 'gsap'
+// import { gsap } from 'gsap'
 let clickedRoomId = ref('')
-// export default defineComponent({
-// name: 'ZHSQ',
-// props: {},
-// components: { BuildingDetails },
-// setup() {
-// let status = ref('')
-let showIntroduction = ref(false)
-let loadingModuleGround = ref(0)
 let progress = ref(0)
-let _progress = 0
-let bData = { name: '移动家属楼', fNum: 1, uNum: 1 }
+let bData = { name: '移动家属楼', fNum: 7, uNum: 1 }
 let toCreateBuilding = true
 onMounted(() => {
 	const { query } = useRoute()
-	// console.log(query)
 	const { f, u } = query
 	if (f && u) toCreateBuilding = true
 	const _f: any = f
@@ -66,41 +36,16 @@ let gui: GUI
 let resMgr = new ResourceTracker()
 let tracker = resMgr.track.bind(resMgr)
 let hasInitGlobleEvent = false
-let environment: typeof modules.Ground
-let ground: typeof modules.Ground
-let ways: typeof modules.Ground
-let grid: typeof modules.Ground
-let buildingOther: typeof modules.Ground
 watch(
 	progress,
 	async (n: number) => {
 		if (n >= 100) {
 			setTimeout(async () => {
 				Object.keys(buildings).forEach(m => {
-					buildings[m] && viewer.scene.add(buildings[m])
+					viewer.scene.add(buildings[m])
 				})
-				initEnvironment()
-				building.resetCamera()
-				await building.clipBuiding()
 				startEventForBuilding()
-				viewer.scene.add(grid)
-				gsap.to(buildingOther.children[0].material, {
-					opacity: 0.1,
-					duration: 1,
-					ease: 'power1.inOut',
-					onComplete: () => { },
-				})
-				environment.addWaysLightAnimation()
-				gsap.to(ways.children[1].children[0].material, {
-					opacity: 0.4,
-					duration: 1,
-					ease: 'power1.inOut',
-					onComplete: () => { },
-				})
-				viewer.controls.maxDistance = 7300
-				setTimeout(() => {
-					showIntroduction.value = true
-				}, 200);
+				console.log('场景添加楼栋',buildings)
 			}, 1000);
 		}
 	}
@@ -113,23 +58,14 @@ function distory() {
 		console.log(e)
 	}
 }
-function initEnvironment() {
-	gsap.to(ground?.children[0].material, {
-		opacity: 0.1,
-		duration: 1,
-		ease: 'power1.inOut',
-		onComplete: () => { },
-	})
-}
 async function init() {
 	/* viewver */
 	viewer = new modules.Viewer('demo')
 	viewer.tracker = tracker
-	viewer.controls.maxPolarAngle = Math.PI / 2.2 //限制controls的上下角度范围
-	// viewer.camera.position.set(-480, 200, 800)
-	viewer.camera.position.set(9978, 4762, 9133)
-	viewer.controls.minDistance = 300
-	// viewer.percentage = progress // 渲染进度
+	// viewer.controls.maxPolarAngle = Math.PI / 2.2 //限制controls的上下角度范围
+	viewer.camera.position.set(-480, 200, 800)
+	// viewer.camera.position.set(9978, 4762, 9133)
+	// viewer.controls.minDistance = 300
 	/* 天空盒 */
 	skyBoxs = new modules.SkyBoxs(viewer)
 	skyBoxs.addSkybox(2)
@@ -143,61 +79,27 @@ async function init() {
 		castShadow: true,
 	})
 	/* 地面 */
-	loadingGroud()
+	// loadingGroud()
 	/* 创建楼栋 */
 	if (toCreateBuilding) buildings = await createBuilding(bData.name, bData.uNum, bData.fNum)
+	progress.value = 100
 	/* 调试 */
 	setTimeout(() => {
 		development()
 	}, 1000);
-	// animate()
-}
-// function animate() {
-// 	if (!buildings?.building || progress.value >= 100) return
-// 	requestAnimationFrame(animate)
-// 	_progress++
-// 	if (_progress % 10 === 0 && progress.value < 100) {
-// 		if (_progress % 10 === 0 && progress.value < 88) {
-// 			progress.value += 15
-// 		} else
-// 			progress.value += 1
-// 	}
-// }
-function loadingProgress(num = 0) {
-	progress.value = Math.ceil(num * 100)
-}
-async function loadingGroud() {
-	environment = new modules.Ground(viewer)
-	ground = await environment.addGround(loadingProgress)
-	buildingOther = await environment.addBuildings()
-	grid = await environment.addGrid()
-	ways = await environment.addWays()
 }
 function resetParams() {
 	resMgr.dispose()
-	activeTypes.clear()
-	// status.value = ''
-	showIntroduction.value = false
 	buildings = {}
 	progress.value = 0
-	_progress = 0
-	viewer.controls.maxDistance = 11000
-	viewer.camera.position.set(9978, 4762, 9133)
 }
-async function createBuilding(name: string, uNum: number, fNum: number) {
+function createBuilding(name: string, uNum: number, fNum: number) {
 	bData.name = name || bData.name
 	bData.uNum = uNum || bData.uNum
 	bData.fNum = fNum || bData.fNum
 	building = new modules.Building(viewer, bData, new THREE.Vector3(0, 0, 0))
-	const b = viewer.tracker(await building.createBuilding(1, bData.name, true))
+	const b = viewer.tracker(building.createBuilding(2))
 	return b
-}
-function reset() {
-	building.resetCamera()
-}
-function clear() {
-	building.clearIconTags()
-	activeTypes.clear()
 }
 /* 建筑事件 */
 function startEventForBuilding() {
@@ -234,37 +136,14 @@ function startEventForBuilding() {
 	})
 	hasInitGlobleEvent = true
 }
-/* 特殊人群 */
-const activeTypes = new Set()
-function changeTypeSpecial(item = {icon:''}) {
-	// console.log(arguments)
-	const { icon } = item
-	if (activeTypes.has(icon)) return
-	activeTypes.add(icon)
-	const html = svgs[icon]
-	// building.clearIconTags()
-	const _tableData = [
-		'1单元101',
-		'2单元302',
-		'3单元401',
-		'4单元701',
-	]
-	if (!html) return
-	const iconTagsGroup = building.addIconTags(_tableData, icon, html)
-	console.log(iconTagsGroup)
-	// iconTagsGroup.forEach(icon => {
-	// 	// viewer.scene.add(icon)
-	// });
-}
 function development() {
 	window.THREE = THREE
 	window.viewer = viewer
 	// window.building = building
 	// window.nameTag = nameTag
 	/* axes */
-	// const axes = new THREE.AxesHelper(300) // 红x  绿y 蓝z
-	// axes.opacity = 0.2
-	// viewer.scene.add(axes)
+	const axes = new THREE.AxesHelper(300) // 红x  绿y 蓝z
+	viewer.scene.add(axes)
 	/* Stats */
 	viewer.addStates()
 	/* GUI */
@@ -290,9 +169,8 @@ function initGui() {
 			console.log('重新创建楼栋', this)
 			resetParams()
 			setTimeout(async () => {
-				loadingGroud()
 				buildings = await createBuilding(this.楼栋名称, this.单元数, this.楼层数)
-				// animate()
+				progress.value = 100
 			}, 100);
 		},
 

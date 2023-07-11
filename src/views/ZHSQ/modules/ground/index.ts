@@ -26,8 +26,8 @@ export default class Ground {
 	addGround(progress: Function) {
 		return new Promise((res) => {
 			return this.loader.loadModelToScene(
-				'http://47.93.98.160:9202/modules/thxcq_layer2.gltf',
-				// 'modules/thxcq_layer2.gltf',
+				// 'http://47.93.98.160:9202/modules/thxcq_layer2.gltf',
+				'modules/thxcq_layer2.gltf',
 				(_model: DsModel) => {
 					const ground = _model.object
 					ground.name = '地形'
