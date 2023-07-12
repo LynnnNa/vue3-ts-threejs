@@ -9,7 +9,7 @@ export default class Unit {
 	c = new THREE.Vector3(0, 0, 0)
 	unitType = 0
 	hasRoof = false
-	constructor(name = '', currentFloor = 0, center = new THREE.Vector3(0, 0, 0), unitType = 1, isTop = false) {
+	constructor(unitType = 1, name = '', currentFloor = 0, center = new THREE.Vector3(0, 0, 0), isTop = false) {
 		this.uName = name
 		this.currentFloor = currentFloor
 		this.c = center
@@ -18,8 +18,8 @@ export default class Unit {
 		return this
 	}
 	async loadUnitModuleData() {
-		const moduleClass = await import(`/@/views/ZHSQ/modules/building/unitData/m${this.unitType}`)
-		const _module = new moduleClass.default(this.uName, this.currentFloor, this.c)
+		const moduleClass = await import(`./unitData/m${this.unitType}.ts`) 
+		const _module = new moduleClass.default(this.uName, this.currentFloor, this.c, this.hasRoof)
 		return _module
 	}
 	async createUnit() {

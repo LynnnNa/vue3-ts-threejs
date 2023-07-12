@@ -22,6 +22,7 @@ export const m_cyanine = new THREE.MeshPhysicalMaterial({
 	transmission: 0, // 折射度，表示光线经过材料时的衰减程度
 	clearcoat: 1,
 	clearcoatRoughness: 0,
+	// side: THREE.DoubleSide,
 	// refractionRatio: 2.5, // 折射率，控制光的折射程度
 })
 export const m_fff = new THREE.MeshPhysicalMaterial({

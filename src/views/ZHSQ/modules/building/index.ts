@@ -48,8 +48,8 @@ export default class Building {
 		this.tracker = viewer.tracker
 		return this
 	}
-	async loadUtileModules() {
-		const _u = new Unit()
+	async loadUtileModules(unitType = 1) {
+		const _u = new Unit(unitType)
 		const _module = await _u.loadUnitModuleData()
 		this.uHeight = _module.uHeight
 		this.uWidth = _module.uWidth
@@ -59,7 +59,7 @@ export default class Building {
 	}
 	// 1: 一梯两户, 2: 一梯三户
 	async createBuilding(unitType = 1, isClip = false) {
-		await this.loadUtileModules()
+		await this.loadUtileModules(unitType)
 		const building: Array<THREE.Group> = []
 		for (let i = 0; i < this.fNum; i++) {
 			const y = this.uHeight * i
@@ -78,7 +78,7 @@ export default class Building {
 		// this.lineGroupTemp = lineGroup
 		return {
 			building: this.tracker(this.buildingGroup),
-			nameTag: this.tracker(this.createNameTag()),
+			// nameTag: this.tracker(this.createNameTag()),
 			lineGroup: lineGroup && this.tracker(lineGroup),
 			lineGroup2: lineGroup2 && this.tracker(lineGroup2),
 		}
@@ -128,7 +128,9 @@ export default class Building {
 			children.forEach((item) => {
 				/* 房盖 */
 				if ('roof'.indexOf(item.name) > -1 && item.name) {
-					item.material = m_cyanine.clone()
+					const _m_rf = m_fff.clone()
+					_m_rf.opacity = 1
+					item.material = _m_rf
 					if (isClip) item.material.clippingPlanes = [floorPlane, floorPlane2]
 				}
 				/* 楼板 */
@@ -136,14 +138,23 @@ export default class Building {
 					item.material = m_fff.clone()
 					if (isClip) item.material.clippingPlanes = [floorPlane, floorPlane2]
 				}
-				/* 楼道墙壁材质 */
+				/* 楼道窗户材质 */
 				if ('corridorWindow'.indexOf(item.name) > -1 && item.name) {
-					item.material = m_glass_2.clone()
+					const _m_cyanine = m_cyanine.clone()
+					_m_cyanine.side = THREE.DoubleSide
+					item.material = _m_cyanine
 					if (isClip) item.material.clippingPlanes = [orridorPlane]
 				}
+				/* 电梯井墙壁材质 */
+				/* if ('elevatorShaft'.indexOf(item.name) > -1 && item.name) {
+					item.material = m_glass_2.clone()
+					if (isClip) item.material.clippingPlanes = [orridorPlane]
+				} */
 				/* 房间材质 */
 				if ('room'.indexOf(item.name) > -1 && item.name) {
-					item.material = m_cyanine.clone()
+					const _m_cyanine = m_cyanine.clone()
+					_m_cyanine.side = THREE.DoubleSide
+					item.material = _m_cyanine
 					if (isClip) item.material.clippingPlanes = [roomPlane]
 				}
 				/* 房间边线 */
@@ -169,7 +180,7 @@ export default class Building {
 		/* 计算每个单元的中心点 */
 		for (let i = 0; i < this.uNum; i++) {
 			const x = this.uWidth * (i - n)
-			const _u = new Unit(`${i + 1}单元`, currentFloor, new THREE.Vector3(x, 0, 0), unitType, isTop)
+			const _u = new Unit(unitType, `${i + 1}单元`, currentFloor, new THREE.Vector3(x, 0, 0), isTop)
 			const _unit = await _u.createUnit()
 			group = group.concat(_unit)
 		}

@@ -12,7 +12,7 @@ import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer'
 // import { gsap } from 'gsap'
 let clickedRoomId = ref('')
 let progress = ref(0)
-let bData = { name: '移动家属楼', fNum: 7, uNum: 1 }
+let bData = { name: '移动家属楼', fNum: 1, uNum: 1 }
 let toCreateBuilding = true
 onMounted(() => {
 	const { query } = useRoute()
@@ -44,8 +44,8 @@ watch(
 				Object.keys(buildings).forEach(m => {
 					viewer.scene.add(buildings[m])
 				})
-				startEventForBuilding()
-				console.log('场景添加楼栋',buildings)
+				// startEventForBuilding()
+				// console.log('场景添加楼栋',buildings)
 			}, 1000);
 		}
 	}

@@ -100,11 +100,11 @@ export const clone = (t) => {
 	})
 	return _t
 }
-export const mirrorCoord = (c, direction = 'X') => {
-	const { x, y, z } = c
-	let res = c
+export const mirrorCoord = (c: THREE.Vector3 & { x: number }, direction = 'X') => {
+	const { x } = c
+	let res = c.clone ? c.clone() : c
 	if (direction === 'X') {
-		res = { x: -x, y, z }
+		res.x = -x
 	}
 	return res
 }
@@ -149,5 +149,32 @@ export const createOutline = (mesh, color = '#36BCFF', opacity = 0.4) => {
 		lineGroup.rotateX(Math.PI / 2)
 	}
 	return lineGroup
+}
+/**
+ *
+ * @param {Array<THREE.Vector2>} pathArr path数组
+ * @param {number} length 拓展长度
+ * @param {number} type 拓展类型 1 外扩, 2收缩
+ * @param {THREE.Vector2} c 参照中心点, ***主义取点方法: 所有定点与该原点连线, 不可穿过path
+ * @return {Array<THREE.Vector2>}
+ */
+export const expandPath = (pathArr: Array<THREE.Vector2> = [], c = new THREE.Vector2(), type = 1, length = 1): Array<THREE.Vector2> => {
+	const { x: cx, y: cy } = c
+	// const l = pathArr.length
+	const path = pathArr.map((coord) => {
+		// const prev = i === 0 ? pathArr[l - 1] : pathArr[i - 1]
+		// const next = i === l - 1 ? pathArr[0] : pathArr[i + 1]
+		const { x, y } = coord
+		let pmX = (x - cx) / Math.abs(x - cx)
+		let pmY = (y - cy) / Math.abs(y - cy)
+		if (type === 1) {
+			pmX = -pmX
+			pmY = -pmY
+		}
+		const newX = pmX ? x - pmX * length : 0
+		const newY = pmY ? y - pmY * length : 0
+		return new THREE.Vector2(newX, newY)
+	})
+	return path
 }
 export default {}
